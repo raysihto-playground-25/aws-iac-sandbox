@@ -1,0 +1,105 @@
+name: CloudFormation CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cloudformation/**'
+      - '.github/workflows/cloudformation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'cloudformation/**'
+      - '.github/workflows/cloudformation.yml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  STACK_NAME: IacLearningCfnStack
+
+jobs:
+  cloudformation:
+    name: CloudFormation Validate and Deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudformation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Validate CloudFormation template
+        run: |
+          aws cloudformation validate-template \
+            --template-body file://template.yaml
+
+      - name: Create Change Set
+        if: github.event_name == 'pull_request'
+        id: changeset
+        run: |
+          CHANGE_SET_NAME="pr-${{ github.event.pull_request.number }}-$(date +%s)"
+          
+          # Check if stack exists
+          if aws cloudformation describe-stacks --stack-name ${{ env.STACK_NAME }} &>/dev/null; then
+            CHANGE_SET_TYPE="UPDATE"
+          else
+            CHANGE_SET_TYPE="CREATE"
+          fi
+          
+          aws cloudformation create-change-set \
+            --stack-name ${{ env.STACK_NAME }} \
+            --template-body file://template.yaml \
+            --change-set-name $CHANGE_SET_NAME \
+            --change-set-type $CHANGE_SET_TYPE \
+            --capabilities CAPABILITY_IAM || true
+          
+          echo "changeset_name=$CHANGE_SET_NAME" >> $GITHUB_OUTPUT
+
+      - name: Wait for Change Set
+        if: github.event_name == 'pull_request'
+        run: |
+          sleep 10
+          aws cloudformation describe-change-set \
+            --stack-name ${{ env.STACK_NAME }} \
+            --change-set-name ${{ steps.changeset.outputs.changeset_name }} || true
+        continue-on-error: true
+
+      - name: Deploy Stack
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          # Check if stack exists
+          if aws cloudformation describe-stacks --stack-name ${{ env.STACK_NAME }} &>/dev/null; then
+            echo "Updating existing stack..."
+            aws cloudformation update-stack \
+              --stack-name ${{ env.STACK_NAME }} \
+              --template-body file://template.yaml \
+              --capabilities CAPABILITY_IAM || echo "No updates to perform"
+            
+            aws cloudformation wait stack-update-complete \
+              --stack-name ${{ env.STACK_NAME }} || true
+          else
+            echo "Creating new stack..."
+            aws cloudformation create-stack \
+              --stack-name ${{ env.STACK_NAME }} \
+              --template-body file://template.yaml \
+              --capabilities CAPABILITY_IAM
+            
+            aws cloudformation wait stack-create-complete \
+              --stack-name ${{ env.STACK_NAME }}
+          fi
+
+      - name: Get Stack Outputs
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          aws cloudformation describe-stacks \
+            --stack-name ${{ env.STACK_NAME }} \
+            --query 'Stacks[0].Outputs' \
+            --output table
