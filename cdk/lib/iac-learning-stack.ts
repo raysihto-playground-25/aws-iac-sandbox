@@ -6,10 +6,13 @@ export class IacLearningStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // Generate random suffix for unique bucket name
+    const randomSuffix = Math.random().toString(36).substring(2, 10);
+    
     // Create S3 bucket with versioning and encryption
     const bucket = new s3.Bucket(this, 'LearningBucket', {
-      // Generate unique bucket name with random suffix
-      bucketName: `iac-learning-bucket-${this.account}-${cdk.Stack.of(this).region}`.toLowerCase(),
+      // Generate unique bucket name with random suffix (similar to Terraform/CloudFormation)
+      bucketName: `iac-learning-bucket-${randomSuffix}`.toLowerCase(),
       
       // Enable versioning
       versioned: true,
@@ -20,12 +23,13 @@ export class IacLearningStack extends cdk.Stack {
       // Block all public access
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       
-      // Don't delete bucket when stack is destroyed (safety measure)
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      // For learning purposes: allow easy cleanup
+      // ⚠️ IMPORTANT: In production, use RETAIN to prevent accidental data loss!
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
       
       // Auto-delete objects when destroying stack (for learning purposes)
-      // In production, you'd likely want RETAIN
-      autoDeleteObjects: false,
+      // ⚠️ IMPORTANT: In production, set this to false!
+      autoDeleteObjects: true,
       
       // Enforce SSL/TLS for all requests
       enforceSSL: true,

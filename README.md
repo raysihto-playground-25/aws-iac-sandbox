@@ -78,6 +78,12 @@ All implementations are designed to stay within AWS Free Tier limits.
 
 ## Getting Started
 
+### Quick Start (Experienced Users)
+
+See [QUICKSTART.md](QUICKSTART.md) for a condensed 5-minute guide.
+
+### Detailed Setup (Recommended for Beginners)
+
 1. Clone this repository:
    ```bash
    git clone https://github.com/raysihto-playground-25/aws-iac-sandbox.git

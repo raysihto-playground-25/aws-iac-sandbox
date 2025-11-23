@@ -202,7 +202,7 @@ const anotherBucket = new s3.Bucket(this, 'AnotherBucket', {
 
 ### Enable Auto-Delete
 
-For easier cleanup during learning, enable auto-delete:
+The default configuration enables auto-delete for learning purposes:
 
 ```typescript
 const bucket = new s3.Bucket(this, 'LearningBucket', {
@@ -212,7 +212,13 @@ const bucket = new s3.Bucket(this, 'LearningBucket', {
 });
 ```
 
-⚠️ **Warning**: Never use this in production!
+⚠️ **Warning**: This is convenient for learning but should NEVER be used in production!
+
+For production, use:
+```typescript
+removalPolicy: cdk.RemovalPolicy.RETAIN,
+autoDeleteObjects: false,
+```
 
 ## Understanding the Code
 
@@ -338,16 +344,17 @@ cdk deploy
 ```
 
 ### Issue: Bucket not emptying on destroy
-The default configuration has `removalPolicy: RETAIN` for safety. To allow automatic cleanup:
+The configuration has `removalPolicy: DESTROY` and `autoDeleteObjects: true` for easy learning cleanup. If you still encounter issues:
 
-```typescript
-removalPolicy: cdk.RemovalPolicy.DESTROY,
-autoDeleteObjects: true,
+```bash
+# Manually empty the bucket if needed
+aws s3 rm s3://bucket-name --recursive
 ```
 
-Or manually empty the bucket:
-```bash
-aws s3 rm s3://bucket-name --recursive
+For production deployments, use:
+```typescript
+removalPolicy: cdk.RemovalPolicy.RETAIN,
+autoDeleteObjects: false,
 ```
 
 ## Best Practices
