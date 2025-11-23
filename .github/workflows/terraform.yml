@@ -20,6 +20,10 @@ jobs:
   terraform:
     name: Terraform Plan and Apply
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write  # For OIDC if configured
     defaults:
       run:
         working-directory: terraform
