@@ -4,6 +4,10 @@
 
 set -e
 
+# Configuration
+CDK_STACK_NAME="IacLearningCdkStack"
+CFN_STACK_NAME="IacLearningCfnStack"
+
 echo "================================================"
 echo "AWS IaC Tools - Resource Verification Script"
 echo "================================================"
@@ -108,7 +112,7 @@ echo "================================================"
 echo "Checking CDK Deployment"
 echo "================================================"
 CDK_BUCKET=$(aws cloudformation describe-stacks \
-    --stack-name IacLearningCdkStack \
+    --stack-name $CDK_STACK_NAME \
     --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' \
     --output text 2>/dev/null || echo "")
 
@@ -126,7 +130,7 @@ echo "================================================"
 echo "Checking CloudFormation Deployment"
 echo "================================================"
 CFN_BUCKET=$(aws cloudformation describe-stacks \
-    --stack-name IacLearningCfnStack \
+    --stack-name $CFN_STACK_NAME \
     --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' \
     --output text 2>/dev/null || echo "")
 

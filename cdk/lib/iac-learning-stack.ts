@@ -6,13 +6,11 @@ export class IacLearningStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // Generate random suffix for unique bucket name
-    const randomSuffix = Math.random().toString(36).substring(2, 10);
-    
     // Create S3 bucket with versioning and encryption
     const bucket = new s3.Bucket(this, 'LearningBucket', {
-      // Generate unique bucket name with random suffix (similar to Terraform/CloudFormation)
-      bucketName: `iac-learning-bucket-${randomSuffix}`.toLowerCase(),
+      // Let CDK auto-generate a unique bucket name based on stack name and resource ID
+      // This ensures uniqueness while being deterministic and trackable
+      // Format: iacleaningcdkstack-learningbucket<unique-id>-<hash>
       
       // Enable versioning
       versioned: true,
