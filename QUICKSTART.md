@@ -2,6 +2,14 @@
 
 This is a condensed quick start for experienced developers. For detailed instructions, see the documentation in the `docs/` directory.
 
+## Overview
+
+This repository includes **3 scenarios** implemented with **3 IaC tools each**:
+
+1. **S3 Bucket** - Storage with versioning and encryption
+2. **DynamoDB Table** - NoSQL database with on-demand billing  
+3. **Lambda + API Gateway** - Serverless REST API
+
 ## Prerequisites Checklist
 
 - [ ] AWS account created
@@ -37,6 +45,11 @@ cd aws-iac-sandbox
 
 ### 3. Try Each Implementation
 
+Navigate to a scenario directory:
+```bash
+cd scenarios/01-s3-bucket  # or 02-dynamodb-table or 03-lambda-api
+```
+
 #### Terraform (5 minutes)
 
 ```bash
@@ -44,7 +57,7 @@ cd terraform
 terraform init
 terraform plan
 terraform apply -auto-approve
-# Note the bucket name from output
+# Note the outputs
 terraform destroy -auto-approve
 cd ..
 ```
@@ -54,10 +67,9 @@ cd ..
 ```bash
 cd cdk
 npm install
-cdk bootstrap  # One-time per account/region
 cdk synth
 cdk deploy --require-approval never
-# Note the bucket name from output
+# Note the outputs
 cdk destroy --force
 cd ..
 ```
@@ -67,47 +79,57 @@ cd ..
 ```bash
 cd cloudformation
 aws cloudformation create-stack \
-  --stack-name IacLearningCfnStack \
+  --stack-name IacLearningStack \
   --template-body file://template.yaml \
   --capabilities CAPABILITY_IAM
 
 aws cloudformation wait stack-create-complete \
-  --stack-name IacLearningCfnStack
+  --stack-name IacLearningStack
 
 # View outputs
 aws cloudformation describe-stacks \
-  --stack-name IacLearningCfnStack \
+  --stack-name IacLearningStack \
   --query 'Stacks[0].Outputs'
 
 # Destroy
-aws cloudformation delete-stack --stack-name IacLearningCfnStack
+aws cloudformation delete-stack --stack-name IacLearningStack
 cd ..
 ```
 
-### 4. Compare All Three
+### 4. Compare All Three Tools in One Scenario
 
 ```bash
+cd scenarios/01-s3-bucket  # Start with S3
+
 # Deploy all three
-cd terraform && ./deploy.sh && cd ..
-cd cdk && ./deploy.sh && cd ..
-cd cloudformation && ./deploy.sh && cd ..
+cd terraform && terraform init && terraform apply -auto-approve && cd ..
+cd cdk && npm install && cdk deploy --require-approval never && cd ..
+cd cloudformation && aws cloudformation create-stack --stack-name S3Stack --template-body file://template.yaml --capabilities CAPABILITY_IAM && cd ..
 
-# Run verification
-./scripts/verify-resources.sh
-
-# Destroy all three
-cd terraform && ./destroy.sh && cd ..
-cd cdk && ./destroy.sh && cd ..
-cd cloudformation && ./destroy.sh && cd ..
+# Destroy all three  
+cd terraform && terraform destroy -auto-approve && cd ..
+cd cdk && cdk destroy --force && cd ..
+cd cloudformation && aws cloudformation delete-stack --stack-name S3Stack && cd ..
 ```
 
-## What You Just Created
+## What Each Scenario Creates
 
-Each implementation creates an S3 bucket with:
-- ✅ Versioning enabled
-- ✅ Server-side encryption (AES256)
-- ✅ Public access blocked
-- ✅ Proper tagging
+### Scenario 01: S3 Bucket
+- S3 bucket with versioning, encryption, public access blocking
+- **Use for:** Static websites, data storage
+- **Free tier:** ✅ 5GB storage
+
+### Scenario 02: DynamoDB Table  
+- DynamoDB table with partition/sort keys, point-in-time recovery
+- **Use for:** User sessions, IoT data, mobile backends
+- **Free tier:** ✅ 25GB storage, 25 WCU/RCU
+
+### Scenario 03: Lambda + API Gateway
+- Lambda function (Python), HTTP API Gateway, IAM roles, CloudWatch logs
+- **Use for:** REST APIs, serverless backends, webhooks
+- **Free tier:** ✅ 1M requests/month
+
+All scenarios stay within AWS Free Tier limits!
 
 ## Key Differences Between Tools
 
@@ -162,11 +184,14 @@ All resources in this repo are **FREE** under AWS Free Tier:
 ```
 aws-iac-sandbox/
 ├── docs/              # Detailed documentation
-├── terraform/         # Terraform implementation
-├── cdk/              # AWS CDK implementation
-├── cloudformation/   # CloudFormation implementation
-├── scripts/          # Utility scripts
+├── scenarios/         # Infrastructure scenarios
+│   ├── 01-s3-bucket/         # Beginner: Storage
+│   ├── 02-dynamodb-table/    # Intermediate: Database
+│   └── 03-lambda-api/        # Advanced: Serverless API
+├── scripts/           # Utility scripts
 └── .github/workflows/ # CI/CD workflows
 ```
+
+Each scenario has terraform/, cdk/, and cloudformation/ subdirectories.
 
 Happy learning! 🚀

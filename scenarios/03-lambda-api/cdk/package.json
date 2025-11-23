@@ -1,0 +1,31 @@
+{
+  "name": "iac-learning-lambda-api-cdk",
+  "version": "1.0.0",
+  "description": "AWS CDK implementation for Lambda + API Gateway learning scenario",
+  "bin": {
+    "iac-learning-lambda-api-cdk": "bin/cdk.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk"
+  },
+  "keywords": [
+    "aws",
+    "cdk",
+    "lambda",
+    "api-gateway",
+    "iac"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "aws-cdk": "^2.100.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.100.0",
+    "constructs": "^10.3.0"
+  }
+}

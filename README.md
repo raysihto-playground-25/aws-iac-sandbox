@@ -1,6 +1,6 @@
 # AWS IaC Tools Comparison
 
-A learning repository comparing major Infrastructure as Code (IaC) tools for AWS by implementing the same simple architecture using different tools.
+A hands-on learning repository comparing major Infrastructure as Code (IaC) tools for AWS across multiple real-world scenarios.
 
 ## Overview
 
@@ -9,7 +9,7 @@ This repository demonstrates how to deploy identical AWS infrastructure using th
 - **AWS CDK (TypeScript)** - AWS's Cloud Development Kit using TypeScript
 - **AWS CloudFormation** - AWS's native IaC service
 
-Each implementation creates the same AWS resources: a versioned S3 bucket with server-side encryption, demonstrating how different tools approach the same infrastructure problem.
+Each scenario implements the same infrastructure with all three tools, allowing you to compare syntax, approaches, and workflows side-by-side.
 
 ## Repository Structure
 
@@ -20,33 +20,24 @@ Each implementation creates the same AWS resources: a versioned S3 bucket with s
 │   ├── 02-local-environment.md   # Local development environment setup
 │   ├── 03-deployment-guide.md    # Deployment and verification guide
 │   └── 04-github-actions.md      # CI/CD setup with GitHub Actions
-├── terraform/                     # Terraform implementation
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   ├── deploy.sh
-│   ├── destroy.sh
-│   └── README.md
-├── cdk/                          # AWS CDK (TypeScript) implementation
-│   ├── bin/
-│   ├── lib/
-│   ├── cdk.json
-│   ├── package.json
-│   ├── deploy.sh
-│   ├── destroy.sh
-│   └── README.md
-├── cloudformation/               # CloudFormation implementation
-│   ├── template.yaml
-│   ├── deploy.sh
-│   ├── destroy.sh
-│   └── README.md
+├── scenarios/                     # Infrastructure scenarios
+│   ├── README.md                 # Scenarios overview
+│   ├── 01-s3-bucket/            # S3 bucket scenario
+│   │   ├── terraform/
+│   │   ├── cdk/
+│   │   └── cloudformation/
+│   ├── 02-dynamodb-table/       # DynamoDB table scenario
+│   │   ├── terraform/
+│   │   ├── cdk/
+│   │   └── cloudformation/
+│   └── 03-lambda-api/           # Lambda + API Gateway scenario
+│       ├── terraform/
+│       ├── cdk/
+│       └── cloudformation/
 ├── .github/
 │   └── workflows/                # GitHub Actions workflows
-│       ├── terraform.yml
-│       ├── cdk.yml
-│       └── cloudformation.yml
 └── scripts/                      # Utility scripts
-    └── verify-resources.sh       # Verify all implementations create equivalent resources
+    └── verify-resources.sh       # Verify implementations
 ```
 
 ## Quick Start
@@ -59,20 +50,36 @@ Each implementation creates the same AWS resources: a versioned S3 bucket with s
 ## What You'll Learn
 
 - How to set up AWS credentials for IaC tools
-- Syntax and structure differences between IaC tools
+- Syntax and structure differences between IaC tools across multiple scenarios
 - Deployment and state management approaches
 - Best practices for each tool
 - How to implement CI/CD pipelines for infrastructure
 - How to verify infrastructure consistency across tools
+- Real-world infrastructure patterns: storage, databases, and serverless APIs
 
-## AWS Resources Created
+## AWS Resources & Scenarios
 
-Each implementation creates:
-- **S3 Bucket** with:
-  - Versioning enabled
-  - Server-side encryption (AES256)
-  - Block public access enabled
-  - Unique naming using random suffix
+This repository includes three real-world infrastructure scenarios:
+
+### Scenario 01: S3 Bucket with Versioning
+- **Complexity:** ⭐ Beginner
+- **Resources:** S3 bucket with versioning, encryption, and public access blocking
+- **Use Cases:** Static websites, data storage, backups
+- **Free Tier:** ✅ 5GB storage, 20K GET, 2K PUT requests/month
+
+### Scenario 02: DynamoDB Table
+- **Complexity:** ⭐⭐ Intermediate
+- **Resources:** DynamoDB table with on-demand billing, point-in-time recovery
+- **Use Cases:** User sessions, IoT data, mobile backends, real-time data
+- **Free Tier:** ✅ 25GB storage, 25 WCU, 25 RCU
+
+### Scenario 03: Lambda + API Gateway
+- **Complexity:** ⭐⭐⭐ Advanced
+- **Resources:** Lambda function, HTTP API Gateway, IAM roles, CloudWatch logs
+- **Use Cases:** REST APIs, serverless backends, webhooks, microservices
+- **Free Tier:** ✅ 1M requests, 400K GB-seconds compute/month
+
+See [scenarios/README.md](scenarios/README.md) for detailed information about each scenario.
 
 All implementations are designed to stay within AWS Free Tier limits.
 
@@ -96,10 +103,11 @@ See [QUICKSTART.md](QUICKSTART.md) for a condensed 5-minute guide.
    - [Deployment Guide](docs/03-deployment-guide.md)
    - [GitHub Actions](docs/04-github-actions.md) (optional)
 
-3. Try each implementation:
-   - [Terraform](terraform/README.md)
-   - [AWS CDK](cdk/README.md)
-   - [CloudFormation](cloudformation/README.md)
+3. Explore the scenarios:
+   - [Scenarios Overview](scenarios/README.md)
+   - Start with [Scenario 01 - S3 Bucket](scenarios/01-s3-bucket/)
+   - Progress to [Scenario 02 - DynamoDB](scenarios/02-dynamodb-table/)
+   - Advanced: [Scenario 03 - Lambda API](scenarios/03-lambda-api/)
 
 ## Cost Considerations
 
