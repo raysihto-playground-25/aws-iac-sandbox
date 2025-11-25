@@ -10,7 +10,7 @@ export class IacLearningStack extends cdk.Stack {
     const bucket = new s3.Bucket(this, 'LearningBucket', {
       // Let CDK auto-generate a unique bucket name based on stack name and resource ID
       // This ensures uniqueness while being deterministic and trackable
-      // Format: iacleaningcdkstack-learningbucket<unique-id>-<hash>
+      // Format: iaclearningcdkstack-learningbucket<unique-id>-<hash>
       
       // Enable versioning
       versioned: true,
