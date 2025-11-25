@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'IaC Learning - S3 Bucket created with CloudFormation'
+
+Parameters:
+  BucketPrefix:
+    Type: String
+    Default: iac-learning-bucket
+    Description: Prefix for the S3 bucket name
+  
+  Environment:
+    Type: String
+    Default: learning
+    Description: Environment tag value
+    AllowedValues:
+      - learning
+      - dev
+      - staging
+      - prod
+
+Resources:
+  # Random suffix for unique bucket name
+  RandomSuffix:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt RandomStringFunction.Arn
+
+  # Lambda function to generate random suffix
+  RandomStringFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-random-suffix'
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt RandomStringFunctionRole.Arn
+      Code:
+        ZipFile: |
+          import random
+          import string
+          import cfnresponse
+          
+          def handler(event, context):
+              if event['RequestType'] == 'Delete':
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                  return
+              
+              # Generate random 8-character string
+              random_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+              
+              response_data = {
+                  'Value': random_string
+              }
+              
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+
+  # IAM role for Lambda function
+  RandomStringFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # S3 Bucket
+  LearningBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${BucketPrefix}-${RandomSuffix.Value}'
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: IaC Learning Bucket
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: CloudFormation
+        - Key: Purpose
+          Value: Learning IaC tools comparison
+
+Outputs:
+  BucketName:
+    Description: Name of the created S3 bucket
+    Value: !Ref LearningBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketName'
+  
+  BucketArn:
+    Description: ARN of the created S3 bucket
+    Value: !GetAtt LearningBucket.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketArn'
+  
+  BucketRegion:
+    Description: Region where the bucket is created
+    Value: !Ref AWS::Region

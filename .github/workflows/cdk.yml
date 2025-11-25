@@ -1,0 +1,101 @@
+name: AWS CDK CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cdk/**'
+      - '.github/workflows/cdk.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'cdk/**'
+      - '.github/workflows/cdk.yml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  cdk:
+    name: CDK Synth and Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write  # For OIDC if configured
+    defaults:
+      run:
+        working-directory: cdk
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: cdk/package-lock.json
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CDK app
+        run: npm run build
+
+      - name: CDK Synth
+        run: npx cdk synth
+
+      - name: CDK Diff
+        if: github.event_name == 'pull_request'
+        id: diff
+        run: npx cdk diff
+        continue-on-error: true
+
+      - name: Comment PR with Diff
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          DIFF_OUTPUT: ${{ steps.diff.outputs.stdout }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### CDK Diff 📊
+            
+            <details><summary>Show Diff</summary>
+            
+            \`\`\`
+            ${process.env.DIFF_OUTPUT || 'No changes detected'}
+            \`\`\`
+            
+            </details>
+            
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: CDK Deploy
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: npx cdk deploy --require-approval never
+
+      - name: Get Stack Outputs
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          aws cloudformation describe-stacks \
+            --stack-name IacLearningCdkStack \
+            --query 'Stacks[0].Outputs' \
+            --output table

@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'IaC Learning - DynamoDB Table created with CloudFormation'
+
+Parameters:
+  TablePrefix:
+    Type: String
+    Default: iac-learning-table
+    Description: Prefix for the DynamoDB table name
+  
+  Environment:
+    Type: String
+    Default: learning
+    Description: Environment tag value
+    AllowedValues:
+      - learning
+      - dev
+      - staging
+      - prod
+
+Resources:
+  # Random suffix for unique table name
+  RandomSuffix:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt RandomStringFunction.Arn
+
+  # Lambda function to generate random suffix
+  RandomStringFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-random-suffix'
+      Runtime: python3.11
+      Handler: index.handler
+      Role: !GetAtt RandomStringFunctionRole.Arn
+      Code:
+        ZipFile: |
+          import random
+          import string
+          import cfnresponse
+          
+          def handler(event, context):
+              if event['RequestType'] == 'Delete':
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+                  return
+              
+              # Generate random 8-character string
+              random_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+              
+              response_data = {
+                  'Value': random_string
+              }
+              
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+
+  # IAM role for Lambda function
+  RandomStringFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # DynamoDB Table
+  LearningTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${TablePrefix}-${RandomSuffix.Value}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ExpiresAt
+        Enabled: true
+      Tags:
+        - Key: Name
+          Value: IaC Learning DynamoDB Table
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ManagedBy
+          Value: CloudFormation
+        - Key: Purpose
+          Value: Learning IaC tools comparison
+
+Outputs:
+  TableName:
+    Description: Name of the created DynamoDB table
+    Value: !Ref LearningTable
+    Export:
+      Name: !Sub '${AWS::StackName}-TableName'
+  
+  TableArn:
+    Description: ARN of the created DynamoDB table
+    Value: !GetAtt LearningTable.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-TableArn'
